@@ -104,7 +104,7 @@ module Looper
       # We do `-display :0` to specify we want the first physical display. Useful if run over SSH
       #
       # NOTE: If you want to view the current XOrg settings, you can do `xset -display :0 -q`
-      shell.run(['xset', '-display', ':0', 's', value])
+      shell.run('xset', '-display', ':0', 's', value)
     end
   end
 
