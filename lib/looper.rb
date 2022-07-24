@@ -160,6 +160,8 @@ module Looper
     end
 
     def spawn(*command)
+      logger.debug("[shell] Running async #{command.inspect}")
+
       stdin, stdout, stderr, thread = Open3.popen3(*command)
 
       BackgroundProcess.new(
