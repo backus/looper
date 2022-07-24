@@ -2,7 +2,6 @@
 # frozen_string_literal: true
 
 require 'looper'
-require 'looper/rspec'
 
 module LooperSpec
   ROOT = Pathname.new(__dir__).parent
@@ -38,7 +37,7 @@ RSpec.configure do |config|
 
   # Write rspec results to a temporary file so that we can use `rspec --only-failures`
   config.example_status_persistence_file_path =
-    SnapshootSpec::ROOT.join('tmp', 'rspec.txt').to_s
+    LooperSpec::ROOT.join('tmp', 'rspec.txt').to_s
 
   # Always aggregate failures when there are multiple expectations. This makes debugging tests with
   # multiple expectations much easier because we can see the failures of each expectation together.
