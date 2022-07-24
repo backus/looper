@@ -151,7 +151,7 @@ module Looper
       logger.debug("[shell] Running #{command.inspect}")
 
       stdout, stderr, status = Open3.capture3(*command)
-      Result.new(stout: stdout, stderr: stderr, status: status)
+      Result.new(stdout: stdout, stderr: stderr, status: status)
     end
 
     class Result
