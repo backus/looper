@@ -92,6 +92,7 @@ module Looper
 
     def no_sleep
       xset_screen_blanking('off')
+      hide_cursor
 
       yield
     ensure
@@ -99,6 +100,10 @@ module Looper
     end
 
     private
+
+    def hide_cursor
+      shell.spawn('unclutter', '-idle', '0', '-display', ':0')
+    end
 
     def xset_screen_blanking(value)
       # We do `-display :0` to specify we want the first physical display. Useful if run over SSH
@@ -152,6 +157,21 @@ module Looper
 
       stdout, stderr, status = Open3.capture3(*command)
       Result.new(stdout: stdout, stderr: stderr, status: status)
+    end
+
+    def spawn(*command)
+      stdin, stdout, stderr, thread = Open3.popen3(*command)
+
+      BackgroundProcess.new(
+        stdin: stdin,
+        stdout: stdout,
+        stderr: stderr,
+        thread: thread
+      )
+    end
+
+    class BackgroundProcess
+      include Anima.new(:stdin, :stdout, :stderr, :thread)
     end
 
     class Result
