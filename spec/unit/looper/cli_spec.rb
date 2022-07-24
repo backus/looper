@@ -26,7 +26,8 @@ RSpec.describe Looper::CLI do
           player:   Looper::VideoPlayer.new(
             Looper::Shell.new(open3: Open3, logger: logger)
           ),
-          playlist: playlist
+          playlist: playlist,
+          logger:   logger
         )
       )
     end

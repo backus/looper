@@ -1,0 +1,8 @@
+#!/usr/bin/env ruby
+
+require 'pathname'
+$LOAD_PATH.unshift(Pathname.new(__dir__).parent.join('lib').expand_path.to_s)
+
+require 'looper'
+
+Looper::CLI.parse(ARGV).runner.run

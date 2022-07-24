@@ -4,9 +4,12 @@ RSpec.describe Looper::Runner do
   subject(:runner) do
     described_class.new(
       player:   video_player,
-      playlist: playlist
+      playlist: playlist,
+      logger:   logger
     )
   end
+
+  let(:logger) { instance_spy(Logger) }
 
   let(:playlist) do
     Looper::Playlist.new(videos)

@@ -37,7 +37,7 @@ module Looper
     end
 
     def runner
-      Runner.new(player: video_player, playlist: playlist)
+      Runner.new(player: video_player, playlist: playlist, logger: logger)
     end
 
     def playlist
@@ -60,12 +60,20 @@ module Looper
   end
 
   class Runner
-    include Anima.new(:player, :playlist)
+    include Anima.new(:player, :playlist, :logger)
 
     def run
+      log_playlist
+
       playlist.each_video do |video|
         player.play(video)
       end
+    end
+
+    private
+
+    def log_playlist
+      logger.info("Playing #{playlist.size} videos.")
     end
   end
 
@@ -73,6 +81,13 @@ module Looper
     include Concord.new(:shell)
 
     def play(video_path)
+      shell.run(
+        'omxplayer',
+        '-p',
+        '-o',
+        'hdmi',
+        video_path.to_s
+      )
     end
   end
 
@@ -80,9 +95,14 @@ module Looper
     include Concord.new(:video_paths)
 
     def self.from_dir(dir)
-      paths = dir.expand_path.glob('*.{mp4,mov,avi,mkv,m4v')
+      paths = dir.expand_path.glob('*.{mp4,mov,avi,mkv,m4v}')
+      p dir.expand_path
 
       new(paths)
+    end
+
+    def size
+      video_paths.size
     end
 
     def each_video(&blk)
