@@ -5,7 +5,8 @@ RSpec.describe Looper::Runner do
     described_class.new(
       player:   video_player,
       playlist: playlist,
-      logger:   logger
+      logger:   logger,
+      system_manager: system_manager,
     )
   end
 
@@ -27,6 +28,12 @@ RSpec.describe Looper::Runner do
     instance_spy(Looper::VideoPlayer)
   end
 
+  let(:system_manager) do
+    instance_double(Looper::SystemManager).tap do |double|
+      allow(double).to receive(:no_sleep).and_yield
+    end
+  end
+
   describe '#run' do
     it 'runs each video in order' do
       runner.run
@@ -34,6 +41,13 @@ RSpec.describe Looper::Runner do
       expect(video_player).to have_received(:play).with(videos[0]).ordered
       expect(video_player).to have_received(:play).with(videos[1]).ordered
       expect(video_player).to have_received(:play).with(videos[2]).ordered
+    end
+
+    it 'ensures the system goes to sleep' do
+      runner.run
+
+      expect(system_manager).to have_received(:no_sleep).ordered
+      expect(video_player).to have_received(:play).thrice.ordered
     end
   end
 end

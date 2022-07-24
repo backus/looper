@@ -20,12 +20,13 @@ module Looper
   end
 
   class CLI
-    include Anima.new(:directory)
+    include Anima.new(:directory, :random)
 
     def self.parse(argv)
       opts =
         Slop.parse(argv) do |slop|
           slop.string('-d', '--dir', 'Directory to scan for videos', required: true)
+          slop.bool('-r', '--random', 'Play videos in random order', default: false)
 
           slop.on('-h', '--help', 'Print this help') do
             puts slop.help
@@ -33,15 +34,22 @@ module Looper
           end
         end
 
-      new(directory: opts.fetch(:dir))
+      new(directory: opts.fetch(:dir), random: opts.fetch(:random))
     end
 
     def runner
-      Runner.new(player: video_player, playlist: playlist, logger: logger)
+      Runner.new(
+        player: video_player,
+        system_manager: SystemManager.new(world.shell),
+        playlist: playlist,
+        logger: logger,
+      )
     end
 
     def playlist
-      Playlist.from_dir(Pathname.new(directory))
+      playlist = Playlist.from_dir(Pathname.new(directory))
+      playlist = playlist.shuffle if random
+      playlist
     end
 
     def video_player
@@ -60,13 +68,15 @@ module Looper
   end
 
   class Runner
-    include Anima.new(:player, :playlist, :logger)
+    include Anima.new(:player, :system_manager, :playlist, :logger)
 
     def run
       log_playlist
 
-      playlist.each_video do |video|
-        player.play(video)
+      system_manager.no_sleep do
+        playlist.each_video do |video|
+          player.play(video)
+        end
       end
     end
 
@@ -74,6 +84,27 @@ module Looper
 
     def log_playlist
       logger.info("Playing #{playlist.size} videos.")
+    end
+  end
+
+  class SystemManager
+    include Concord.new(:shell)
+
+    def no_sleep
+      xset_screen_blanking('off')
+
+      yield
+    ensure
+      xset_screen_blanking('600')
+    end
+
+    private
+
+    def xset_screen_blanking(value)
+      # We do `-display :0` to specify we want the first physical display. Useful if run over SSH
+      #
+      # NOTE: If you want to view the current XOrg settings, you can do `xset -display :0 -q`
+      shell.run(['xset', '-display', ':0', 's', value])
     end
   end
 
@@ -96,9 +127,12 @@ module Looper
 
     def self.from_dir(dir)
       paths = dir.expand_path.glob('*.{mp4,mov,avi,mkv,m4v}')
-      p dir.expand_path
 
       new(paths)
+    end
+
+    def shuffle
+      self.class.new(video_paths.shuffle)
     end
 
     def size
